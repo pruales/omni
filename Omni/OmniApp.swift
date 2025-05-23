@@ -6,27 +6,38 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct OmniApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+    @StateObject private var searchWindowManager = SearchWindowManager()
+    private var globalShortcut: GlobalShortcut?
+    
+    init() {
+        let manager = SearchWindowManager()
+        _searchWindowManager = StateObject(wrappedValue: manager)
+        
+        globalShortcut = GlobalShortcut {
+            DispatchQueue.main.async {
+                manager.toggle()
+            }
         }
-    }()
+        globalShortcut?.register()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            EmptyView()
+                .frame(width: 0, height: 0)
         }
-        .modelContainer(sharedModelContainer)
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .commands {
+            CommandGroup(replacing: .newItem) { }
+        }
+        
+        Settings {
+            Text("Omni Settings")
+                .padding()
+        }
     }
 }
